@@ -1,0 +1,33 @@
+{
+    "name": "aaronheath/laravel-model-copy",
+    "description": "Copy one Laravel Eloquent model from one table to another.",
+    "license": "MIT",
+    "keywords": ["laravel", "eloquent", "model", "copy", "move", "backup"],
+    "authors": [
+        {
+            "name": "Aaron Heath",
+            "email": "aaron@aaronheath.com",
+            "homepage": "https://aaronheath.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "illuminate/support": "^8.61"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.21",
+        "sempro/phpunit-pretty-print": "^1.0",
+        "spatie/laravel-ray": "^1.17"
+    },
+    "autoload": {
+        "psr-4": {
+            "Heath\\LaravelModelCopy\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable"
+}
