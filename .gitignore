@@ -24,3 +24,4 @@ Homestead.json
 
 .idea
 composer.lock
+phpunit.xml

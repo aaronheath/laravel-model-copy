@@ -14,7 +14,7 @@ class LaravelModelCopyTest extends TestCase
      */
     public function copies_model_from_one_table_to_another()
     {
-        // app(DescribeModel::class)->setModel(ExampleA::class)->columns();
+         app(DescribeModel::class)->setModel(ExampleA::class)->columns();
 
         ExampleA::create([
             'a' => 'Hello',

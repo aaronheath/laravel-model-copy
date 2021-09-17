@@ -18,8 +18,12 @@ class DescribeModel
 
     public function columns()
     {
-        $table = $this->model->getTable();
+        return DB::getSchemaBuilder()
+            ->getColumnListing($this->table());
+    }
 
-        return DB::getSchemaBuilder()->getColumnListing($table);;
+    public function table()
+    {
+        return $this->model->getTable();
     }
 }
