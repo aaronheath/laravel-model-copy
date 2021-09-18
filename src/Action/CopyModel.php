@@ -2,18 +2,19 @@
 
 namespace Heath\LaravelModelCopy\Action;
 
+use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class CopyModel
 {
-    protected Model $model;
+    protected Model $fromModel;
     protected string $toModel;
     protected bool $deleteOriginal = false;
 
-    public function copy(Model $model)
+    public function copy(Model $fromModel)
     {
-        $this->model = $model;
+        $this->fromModel = $fromModel;
 
         return $this;
     }
@@ -34,21 +35,105 @@ class CopyModel
 
     public function run()
     {
-        // TODO check that we have a model to copy and a model to copy to.
+        $this->validate();
 
-        // TODO check that to model has columns of original model. Use caching.
+        $this->performCopy();
 
-        DB::table(app(DescribeModel::class)->setModel($this->toModel)->table())
-            ->insert($this->model->getAttributes());
-
-        // TODO check that model has been copied
+        $this->confirmModelCopied();
 
         if($this->deleteOriginal) {
-            $this->model->forceDelete();
+            $this->fromModel->forceDelete();
 
-            // TODO check that model has been deleted
+            $this->confirmOriginalModelDeleted();
         }
     }
 
+    protected function validate()
+    {
+        $this->validateInput();
 
+        $this->validateColumns();
+    }
+
+    protected function validateInput()
+    {
+        if(is_null($this->fromModel)) {
+            throw new LaravelModelCopyValidationException(
+                'Unable to copy model as original model class hasn\'t been defined.'
+            );
+        }
+
+        if(! class_exists($this->toModel)) {
+            throw new LaravelModelCopyValidationException(
+                sprintf(
+                    'Unable to copy model as new model class doesn\'t exist. Model: %s, ID: %s',
+                    get_class($this->model),
+                    $this->model->id
+                )
+            );
+        }
+    }
+
+    protected function validateColumns()
+    {
+        $fromColumns = app(DescribeModel::class)->setModel($this->fromModel)->columns();
+
+        $toColumns = app(DescribeModel::class)->setModel($this->toModel)->columns();
+
+        $diff = collect($fromColumns)->diff($toColumns);
+
+        if($diff->isEmpty()) {
+            return;
+        }
+
+        throw new LaravelModelCopyValidationException(
+            sprintf(
+                'Unable to copy model as new table doesn\'t contain all columns of the original table. Model: %s, ID: %s, Columns: %s',
+                get_class($this->model),
+                $this->model->id,
+                $diff->implode(', ')
+            )
+        );
+    }
+
+    protected function performCopy()
+    {
+        DB::table(app(DescribeModel::class)->setModel($this->toModel)->table())
+            ->updateOrInsert(
+                ['id' => $this->fromModel->getAttribute('id')],
+                $this->fromModel->getAttributes()
+            );
+    }
+
+    protected function confirmModelCopied()
+    {
+        $newRecord = DB::table(app(DescribeModel::class)->setModel($this->toModel)->table())
+            ->find($this->fromModel->getAttribute('id'));
+
+        if(is_null($newRecord)) {
+            throw new LaravelModelCopyValidationException(
+                sprintf(
+                    'Model copy failed. Original copy has not been removed. Model: %s, ID: %s',
+                    get_class($this->fromModel),
+                    $this->fromModel->id
+                )
+            );
+        };
+    }
+
+    protected function confirmOriginalModelDeleted()
+    {
+        $newRecord = DB::table(app(DescribeModel::class)->setModel($this->fromModel)->table())
+            ->find($this->fromModel->getAttribute('id'));
+
+        if(! is_null($newRecord)) {
+            throw new LaravelModelCopyValidationException(
+                sprintf(
+                    'Model deletion has failed. Original copy has not been removed. Model: %s, ID: %s',
+                    get_class($this->fromModel),
+                    $this->fromModel->id
+                )
+            );
+        };
+    }
 }
