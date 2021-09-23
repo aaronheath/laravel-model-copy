@@ -13,6 +13,7 @@ class CreateExampleBTable extends Migration
             $table->string('a');
             $table->boolean('b');
             $table->string('c')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

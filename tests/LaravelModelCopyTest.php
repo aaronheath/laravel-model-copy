@@ -16,18 +16,30 @@ class LaravelModelCopyTest extends TestCase
      */
     public function copies_model_from_one_table_to_another()
     {
-        $fromModel = ExampleA::create([
+        $data = [
             'a' => 'Hello',
             'b' => true,
             'c' => 'Goodbye',
-        ]);
+        ];
 
-        $this->assertNull(ExampleB::find($fromModel->id));
+        $fromModel = ExampleA::create($data);
+
+        $fromRecord = DB::table('example_a')->find($fromModel->id);
+
+        $this->assertNotNull($fromRecord);
 
         app(CopyModel::class)->copy($fromModel)->to(ExampleB::class)->run();
 
-        $this->assertInstanceOf(ExampleA::class, ExampleA::find($fromModel->id));
-        $this->assertInstanceOf(ExampleB::class, ExampleB::find($fromModel->id));
+        $toRecord = DB::table('example_b')->find($fromModel->id);
+
+        $this->assertNotNull($toRecord);
+
+        $this->assertEquals($fromRecord->a, $toRecord->a);
+        $this->assertEquals($fromRecord->b, $toRecord->b);
+        $this->assertEquals($fromRecord->c, $toRecord->c);
+        $this->assertNull($toRecord->deleted_at);
+        $this->assertEquals($fromRecord->created_at, $toRecord->created_at);
+        $this->assertEquals($fromRecord->updated_at, $toRecord->updated_at);
     }
 
     /**
