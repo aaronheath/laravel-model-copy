@@ -16,13 +16,11 @@ class LaravelModelCopyTest extends TestCase
      */
     public function copies_model_from_one_table_to_another()
     {
-        $data = [
+        $fromModel = ExampleA::create([
             'a' => 'Hello',
             'b' => true,
             'c' => 'Goodbye',
-        ];
-
-        $fromModel = ExampleA::create($data);
+        ]);
 
         $fromRecord = DB::table('example_a')->find($fromModel->id);
 
