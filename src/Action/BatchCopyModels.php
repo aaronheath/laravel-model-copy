@@ -59,6 +59,21 @@ class BatchCopyModels
         return $this;
     }
 
+//    public function when($value, callable $callback = null, callable $default = null)
+//    {
+//        if (! $callback) {
+//            return new HigherOrderWhenProxy($this, $value);
+//        }
+//
+//        if ($value) {
+//            return $callback($this, $value);
+//        } elseif ($default) {
+//            return $default($this, $value);
+//        }
+//
+//        return $this;
+//    }
+
     public function run()
     {
         $this->query->chunkById($this->chunkSize, function($items) {
@@ -66,6 +81,8 @@ class BatchCopyModels
                 CopyModel::make()
                     ->copy($item)
                     ->to($this->toModel)
+                    ->when($this->deleteOriginal, fn($self) => $self->deleteOriginal())
+//                    ->deleteOriginal()
                     ->run();
             });
         });
@@ -82,6 +99,7 @@ class BatchCopyModels
 //            $this->confirmOriginalModelDeleted();
 //        }
     }
+
 
 //    protected function validate()
 //    {

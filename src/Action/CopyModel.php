@@ -41,6 +41,17 @@ class CopyModel
 //        return $this;
 //    }
 
+    public function when($value, callable $fn)
+    {
+        if(! $value) {
+            return $this;
+        }
+
+        return $fn($this);
+
+//        return $this;
+    }
+
     public function run()
     {
         $this->validate();
