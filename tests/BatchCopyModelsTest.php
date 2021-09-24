@@ -149,4 +149,20 @@ class BatchCopyModelsTest extends TestCase
             return true;
         });
     }
+
+    /**
+     * @test
+     */
+    public function pushes_individual_jobs_to_specific_queue_for_copies()
+    {
+        
+    }
+
+    /**
+     * @test
+     */
+    public function test_validation()
+    {
+        
+    }
 }

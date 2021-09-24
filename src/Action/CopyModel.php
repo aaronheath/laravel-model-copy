@@ -12,14 +12,14 @@ class CopyModel
     protected string $toModel;
     protected bool $deleteOriginal = false;
 
-    public function __get($key)
-    {
-        return $this->{$key} ?? null;
-    }
-
     static public function make(): CopyModel
     {
         return app(CopyModel::class);
+    }
+
+    public function __get($key)
+    {
+        return $this->{$key} ?? null;
     }
 
     public function copy(Model $fromModel)
