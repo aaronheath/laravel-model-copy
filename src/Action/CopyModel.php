@@ -57,9 +57,15 @@ class CopyModel
 
     protected function validateInput()
     {
-        if(is_null($this->fromModel)) {
+        if(! isset($this->fromModel)) {
             throw new LaravelModelCopyValidationException(
                 'Unable to copy model as original model class hasn\'t been defined.'
+            );
+        }
+
+        if(! isset($this->toModel)) {
+            throw new LaravelModelCopyValidationException(
+                'Unable to copy model as new model class hasn\'t been defined.'
             );
         }
 
@@ -67,8 +73,8 @@ class CopyModel
             throw new LaravelModelCopyValidationException(
                 sprintf(
                     'Unable to copy model as new model class doesn\'t exist. Model: %s, ID: %s',
-                    get_class($this->model),
-                    $this->model->id
+                    get_class($this->fromModel),
+                    $this->fromModel->id
                 )
             );
         }
@@ -89,8 +95,8 @@ class CopyModel
         throw new LaravelModelCopyValidationException(
             sprintf(
                 'Unable to copy model as new table doesn\'t contain all columns of the original table. Model: %s, ID: %s, Columns: %s',
-                get_class($this->model),
-                $this->model->id,
+                get_class($this->fromModel),
+                $this->fromModel->id,
                 $diff->implode(', ')
             )
         );
