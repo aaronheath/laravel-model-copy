@@ -56,7 +56,7 @@ class BatchCopyModels
         return $this;
     }
 
-    public function asJob(string $queue = 'default')
+    public function asJob(string $queue = null)
     {
 
     }
