@@ -26,7 +26,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Database\\Factories\\Tests\\Models\\": "database/factories/"
         }
     },
     "minimum-stability": "stable"

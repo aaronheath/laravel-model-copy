@@ -16,11 +16,8 @@ class LaravelModelCopyTest extends TestCase
      */
     public function copies_model_from_one_table_to_another()
     {
-        $fromModel = ExampleA::create([
-            'a' => 'Hello',
-            'b' => true,
-            'c' => 'Goodbye',
-        ]);
+
+        $fromModel = ExampleA::factory()->create();
 
         $fromRecord = DB::table('example_a')->find($fromModel->id);
         $this->assertNotNull($fromRecord);
@@ -44,11 +41,7 @@ class LaravelModelCopyTest extends TestCase
      */
     public function copies_soft_deleted_model_from_one_table_to_another()
     {
-        $fromModel = ExampleA::create([
-            'a' => 'Hello',
-            'b' => true,
-            'c' => 'Goodbye',
-        ]);
+        $fromModel = ExampleA::factory()->create();
 
         $fromModel->delete();
 
@@ -73,11 +66,7 @@ class LaravelModelCopyTest extends TestCase
      */
     public function deletes_original_model_when_requested()
     {
-        $fromModel = ExampleA::create([
-            'a' => 'Hello',
-            'b' => true,
-            'c' => 'Goodbye',
-        ]);
+        $fromModel = ExampleA::factory()->create();
 
         $fromModel->delete();
 
@@ -126,11 +115,7 @@ class LaravelModelCopyTest extends TestCase
      */
     public function fails_copy_when_to_model_isnt_model()
     {
-        $fromModel = ExampleA::create([
-            'a' => 'Hello',
-            'b' => true,
-            'c' => 'Goodbye',
-        ]);
+        $fromModel = ExampleA::factory()->create();
 
         $this->expectException(LaravelModelCopyValidationException::class);
         $this->expectExceptionMessage('Unable to copy model as new model class doesn\'t exist. Model: Tests\Models\ExampleA, ID: ' . $fromModel->id);
@@ -143,11 +128,7 @@ class LaravelModelCopyTest extends TestCase
      */
     public function fails_copy_when_to_table_doesnt_have_same_columns()
     {
-        $fromModel = ExampleA::create([
-            'a' => 'Hello',
-            'b' => true,
-            'c' => 'Goodbye',
-        ]);
+        $fromModel = ExampleA::factory()->create();
 
         $this->expectException(LaravelModelCopyValidationException::class);
         $this->expectExceptionMessage('Unable to copy model as new table doesn\'t contain all columns of the original table. Model: Tests\Models\ExampleA, ID: ' . $fromModel->id . ', Columns: b, c');
