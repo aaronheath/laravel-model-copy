@@ -4,6 +4,7 @@ namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
 use Heath\LaravelModelCopy\Traits\SetupHelper;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -52,7 +53,7 @@ class BatchCopyModels
         return $this;
     }
 
-    public function query(/* TODO add type */ $query)
+    public function query(Builder $query)
     {
         $this->query = $query;
 
@@ -76,13 +77,16 @@ class BatchCopyModels
 
     public function run()
     {
+//        $this->validate();
+
+        dd($this->query);
+
         $this->query->chunkById($this->chunkSize, function($items) {
             $items->each(function($item) {
                 CopyModel::make()
                     ->copy($item)
                     ->to($this->toModel)
                     ->when($this->deleteOriginal, fn($self) => $self->deleteOriginal())
-//                    ->deleteOriginal()
                     ->run();
             });
         });
@@ -101,37 +105,41 @@ class BatchCopyModels
     }
 
 
-//    protected function validate()
-//    {
-//        $this->validateInput();
+    protected function validate()
+    {
+        $this->validateInput();
+    }
 //
-//        $this->validateColumns();
-//    }
-//
-//    protected function validateInput()
-//    {
+    protected function validateInput()
+    {
 //        if(! isset($this->fromModel)) {
 //            throw new LaravelModelCopyValidationException(
 //                'Unable to copy model as original model class hasn\'t been defined.'
 //            );
 //        }
-//
-//        if(! isset($this->toModel)) {
-//            throw new LaravelModelCopyValidationException(
-//                'Unable to copy model as new model class hasn\'t been defined.'
-//            );
-//        }
-//
-//        if(! class_exists($this->toModel)) {
-//            throw new LaravelModelCopyValidationException(
-//                sprintf(
-//                    'Unable to copy model as new model class doesn\'t exist. Model: %s, ID: %s',
-//                    get_class($this->fromModel),
-//                    $this->fromModel->id
-//                )
-//            );
-//        }
-//    }
+
+        if(! isset($this->query)) {
+            throw new LaravelModelCopyValidationException(
+                'Unable to copy model as new model class hasn\'t been defined.'
+            );
+        }
+
+        if(! isset($this->toModel)) {
+            throw new LaravelModelCopyValidationException(
+                'Unable to copy model as new model class hasn\'t been defined.'
+            );
+        }
+
+        if(! class_exists($this->toModel)) {
+            throw new LaravelModelCopyValidationException(
+                sprintf(
+                    'Unable to copy model as new model class doesn\'t exist. Model: %s, ID: %s',
+                    get_class($this->fromModel),
+                    $this->fromModel->id
+                )
+            );
+        }
+    }
 //
 //    protected function validateColumns()
 //    {
