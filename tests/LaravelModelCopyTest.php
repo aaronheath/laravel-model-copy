@@ -25,7 +25,7 @@ class LaravelModelCopyTest extends TestCase
         $fromRecord = DB::table('example_a')->find($fromModel->id);
         $this->assertNotNull($fromRecord);
 
-        app(CopyModel::class)->copy($fromModel)->to(ExampleB::class)->run();
+        CopyModel::make()->copy($fromModel)->to(ExampleB::class)->run();
 
         $toRecord = DB::table('example_b')->find($fromModel->id);
 
@@ -55,7 +55,7 @@ class LaravelModelCopyTest extends TestCase
         $fromRecord = DB::table('example_a')->find($fromModel->id);
         $this->assertNotNull($fromRecord);
 
-        app(CopyModel::class)->copy($fromModel)->to(ExampleB::class)->run();
+        CopyModel::make()->copy($fromModel)->to(ExampleB::class)->run();
 
         $toRecord = DB::table('example_b')->find($fromModel->id);
         $this->assertNotNull($toRecord);
@@ -84,7 +84,7 @@ class LaravelModelCopyTest extends TestCase
         $fromRecord = DB::table('example_a')->find($fromModel->id);
         $this->assertNotNull($fromRecord);
 
-        app(CopyModel::class)->copy($fromModel)->to(ExampleB::class)->deleteOriginal()->run();
+        CopyModel::make()->copy($fromModel)->to(ExampleB::class)->deleteOriginal()->run();
 
         $toRecord = DB::table('example_b')->find($fromModel->id);
         $this->assertNotNull($toRecord);
@@ -101,7 +101,7 @@ class LaravelModelCopyTest extends TestCase
         $this->expectException(LaravelModelCopyValidationException::class);
         $this->expectExceptionMessage('Unable to copy model as original model class hasn\'t been defined.');
 
-        app(CopyModel::class)->to(ExampleB::class)->run();
+        CopyModel::make()->to(ExampleB::class)->run();
     }
 
     /**
@@ -118,7 +118,7 @@ class LaravelModelCopyTest extends TestCase
             'c' => 'Goodbye',
         ]);
 
-        app(CopyModel::class)->copy($fromModel)->run();
+        CopyModel::make()->copy($fromModel)->run();
     }
 
     /**
@@ -135,7 +135,7 @@ class LaravelModelCopyTest extends TestCase
         $this->expectException(LaravelModelCopyValidationException::class);
         $this->expectExceptionMessage('Unable to copy model as new model class doesn\'t exist. Model: Tests\Models\ExampleA, ID: ' . $fromModel->id);
 
-        app(CopyModel::class)->copy($fromModel)->to('Tests\Models\DoesntExist')->run();
+        CopyModel::make()->copy($fromModel)->to('Tests\Models\DoesntExist')->run();
     }
 
     /**
@@ -152,6 +152,6 @@ class LaravelModelCopyTest extends TestCase
         $this->expectException(LaravelModelCopyValidationException::class);
         $this->expectExceptionMessage('Unable to copy model as new table doesn\'t contain all columns of the original table. Model: Tests\Models\ExampleA, ID: ' . $fromModel->id . ', Columns: b, c');
 
-        app(CopyModel::class)->copy($fromModel)->to(ExampleC::class)->run();
+        CopyModel::make()->copy($fromModel)->to(ExampleC::class)->run();
     }
 }

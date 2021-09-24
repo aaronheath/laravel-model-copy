@@ -12,6 +12,11 @@ class CopyModel
     protected string $toModel;
     protected bool $deleteOriginal = false;
 
+    static public function make(): CopyModel
+    {
+        return app(CopyModel::class);
+    }
+
     public function copy(Model $fromModel)
     {
         $this->fromModel = $fromModel;
