@@ -3,43 +3,45 @@
 namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
-use Heath\LaravelModelCopy\Traits\SetupHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class CopyModel
 {
-    use SetupHelper;
+    protected Model $fromModel;
+    protected string $toModel;
+    protected bool $deleteOriginal = false;
 
-//    protected Model $fromModel;
-//    protected string $toModel;
-//    protected bool $deleteOriginal = false;
-//
+    public function __get($key)
+    {
+        return $this->{$key} ?? null;
+    }
+
     static public function make(): CopyModel
     {
         return app(CopyModel::class);
     }
-//
-//    public function copy(Model $fromModel)
-//    {
-//        $this->fromModel = $fromModel;
-//
-//        return $this;
-//    }
-//
-//    public function to(string $toModel)
-//    {
-//        $this->toModel = $toModel;
-//
-//        return $this;
-//    }
-//
-//    public function deleteOriginal()
-//    {
-//        $this->deleteOriginal = true;
-//
-//        return $this;
-//    }
+
+    public function copy(Model $fromModel)
+    {
+        $this->fromModel = $fromModel;
+
+        return $this;
+    }
+
+    public function to(string $toModel)
+    {
+        $this->toModel = $toModel;
+
+        return $this;
+    }
+
+    public function deleteOriginal()
+    {
+        $this->deleteOriginal = true;
+
+        return $this;
+    }
 
     public function when($value, callable $fn)
     {
@@ -48,8 +50,6 @@ class CopyModel
         }
 
         return $fn($this);
-
-//        return $this;
     }
 
     public function run()

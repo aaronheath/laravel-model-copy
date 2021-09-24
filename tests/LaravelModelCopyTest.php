@@ -4,6 +4,8 @@ namespace Tests;
 
 use Heath\LaravelModelCopy\Action\CopyModel;
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Models\ExampleA;
 use Tests\Models\ExampleB;
@@ -11,12 +13,13 @@ use Tests\Models\ExampleC;
 
 class LaravelModelCopyTest extends TestCase
 {
+    use DatabaseTransactions;
+
     /**
      * @test
      */
     public function copies_model_from_one_table_to_another()
     {
-
         $fromModel = ExampleA::factory()->create();
 
         $fromRecord = DB::table('example_a')->find($fromModel->id);

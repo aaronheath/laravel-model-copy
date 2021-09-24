@@ -3,35 +3,24 @@
 namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
-use Heath\LaravelModelCopy\Traits\SetupHelper;
+use Heath\LaravelModelCopy\Jobs\CopyModelJob;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class BatchCopyModels
 {
-//    use SetupHelper;
-
-//    protected Model $fromModel;
     protected string $toModel;
     protected bool $deleteOriginal = false;
     protected int $chunkSize = 100;
-    protected $query; // TODO add type
-//
+    protected Builder $query;
+    protected int $count = 0;
+    protected int $limit = 0;
+    protected bool $copyModelsAsJobs = false;
+
     static public function make(): BatchCopyModels
     {
         return app(BatchCopyModels::class);
     }
 
-
-//
-//    public function copy(Model $fromModel)
-//    {
-//        $this->fromModel = $fromModel;
-//
-//        return $this;
-//    }
-//
     public function to(string $toModel)
     {
         $this->toModel = $toModel;
@@ -60,36 +49,53 @@ class BatchCopyModels
         return $this;
     }
 
-//    public function when($value, callable $callback = null, callable $default = null)
-//    {
-//        if (! $callback) {
-//            return new HigherOrderWhenProxy($this, $value);
-//        }
-//
-//        if ($value) {
-//            return $callback($this, $value);
-//        } elseif ($default) {
-//            return $default($this, $value);
-//        }
-//
-//        return $this;
-//    }
+    public function limit(int $limit)
+    {
+        $this->limit = $limit;
+
+        return $this;
+    }
+
+    public function asJob(string $queue = 'default')
+    {
+
+    }
+
+    public function copyModelsAsJobs()
+    {
+        $this->copyModelsAsJobs = true;
+
+        return $this;
+    }
 
     public function run()
     {
 //        $this->validate();
 
-        dd($this->query);
+//        dd($this->query);
 
-        $this->query->chunkById($this->chunkSize, function($items) {
-            $items->each(function($item) {
-                CopyModel::make()
-                    ->copy($item)
-                    ->to($this->toModel)
-                    ->when($this->deleteOriginal, fn($self) => $self->deleteOriginal())
-                    ->run();
+        $this
+            ->query
+            ->chunkById($this->chunkSize, function($items) {
+                if($this->hasReachedLimit()) {
+                    return false;
+                }
+
+                $items->each(function($item) {
+                    $this->incrementCount();
+
+                    if($this->hasReachedLimit()) {
+                        return false;
+                    }
+
+                    $copyModel = CopyModel::make()
+                        ->copy($item)
+                        ->to($this->toModel)
+                        ->when($this->deleteOriginal, fn($self) => $self->deleteOriginal());
+
+                    $this->copyModelsAsJobs ? CopyModelJob::dispatch($copyModel) : $copyModel->run();
+                });
             });
-        });
 
 //        $this->validate();
 //
@@ -102,6 +108,20 @@ class BatchCopyModels
 //
 //            $this->confirmOriginalModelDeleted();
 //        }
+    }
+
+    public function incrementCount()
+    {
+        $this->count++;
+    }
+
+    public function hasReachedLimit()
+    {
+        if(! $this->limit) {
+            return false;
+        }
+
+        return $this->count > $this->limit;
     }
 
 
