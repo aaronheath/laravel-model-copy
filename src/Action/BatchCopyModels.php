@@ -61,6 +61,15 @@ class BatchCopyModels
 
     public function run()
     {
+        $this->query->chunkById($this->chunkSize, function($items) {
+            $items->each(function($item) {
+                CopyModel::make()
+                    ->copy($item)
+                    ->to($this->toModel)
+                    ->run();
+            });
+        });
+
 //        $this->validate();
 //
 //        $this->performCopy();
