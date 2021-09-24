@@ -9,16 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class BatchCopyModels
 {
-    use SetupHelper;
+//    use SetupHelper;
 
 //    protected Model $fromModel;
-//    protected string $toModel;
-//    protected bool $deleteOriginal = false;
+    protected string $toModel;
+    protected bool $deleteOriginal = false;
+    protected int $chunkSize = 100;
+    protected $query; // TODO add type
 //
     static public function make(): BatchCopyModels
     {
         return app(BatchCopyModels::class);
     }
+
+
 //
 //    public function copy(Model $fromModel)
 //    {
@@ -27,19 +31,33 @@ class BatchCopyModels
 //        return $this;
 //    }
 //
-//    public function to(string $toModel)
-//    {
-//        $this->toModel = $toModel;
-//
-//        return $this;
-//    }
-//
-//    public function deleteOriginal()
-//    {
-//        $this->deleteOriginal = true;
-//
-//        return $this;
-//    }
+    public function to(string $toModel)
+    {
+        $this->toModel = $toModel;
+
+        return $this;
+    }
+
+    public function deleteOriginal()
+    {
+        $this->deleteOriginal = true;
+
+        return $this;
+    }
+
+    public function chunkSize(int $chunkSize)
+    {
+        $this->chunkSize = $chunkSize;
+
+        return $this;
+    }
+
+    public function query(/* TODO add type */ $query)
+    {
+        $this->query = $query;
+
+        return $this;
+    }
 
     public function run()
     {
