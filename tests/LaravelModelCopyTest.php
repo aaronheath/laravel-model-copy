@@ -88,6 +88,38 @@ class LaravelModelCopyTest extends TestCase
     /**
      * @test
      */
+    public function processes_when_expiry_is_in_future()
+    {
+        $fromModel = ExampleA::factory()->create();
+
+        DB::table('example_a')->find($fromModel->id);
+
+        CopyModel::make()->copy($fromModel)->to(ExampleB::class)->processBefore(now()->addHour())->run();
+
+        $toRecord = DB::table('example_b')->find($fromModel->id);
+
+        $this->assertNotNull($toRecord);
+    }
+
+    /**
+     * @test
+     */
+    public function doesnt_processes_when_expiry_is_in_past()
+    {
+        $fromModel = ExampleA::factory()->create();
+
+        DB::table('example_a')->find($fromModel->id);
+
+        CopyModel::make()->copy($fromModel)->to(ExampleB::class)->processBefore(now()->subHour())->run();
+
+        $toRecord = DB::table('example_b')->find($fromModel->id);
+
+        $this->assertNull($toRecord);
+    }
+
+    /**
+     * @test
+     */
     public function fails_copy_when_from_model_not_defined()
     {
         $this->expectException(LaravelModelCopyValidationException::class);

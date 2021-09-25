@@ -4,6 +4,7 @@ namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CopyModel
@@ -11,6 +12,7 @@ class CopyModel
     protected Model $fromModel;
     protected string $toModel;
     protected bool $deleteOriginal = false;
+    protected Carbon $processBefore;
 
     static public function make(): CopyModel
     {
@@ -43,6 +45,13 @@ class CopyModel
         return $this;
     }
 
+    public function processBefore(Carbon $processBefore)
+    {
+        $this->processBefore = $processBefore;
+
+        return $this;
+    }
+
     public function when($value, callable $fn)
     {
         if(! $value) {
@@ -54,6 +63,10 @@ class CopyModel
 
     public function run()
     {
+        if($this->isExpired()) {
+            return;
+        }
+
         $this->validate();
 
         $this->performCopy();
@@ -72,6 +85,15 @@ class CopyModel
         $this->validateInput();
 
         $this->validateColumns();
+    }
+
+    protected function isExpired()
+    {
+        if(! isset($this->processBefore)) {
+            return false;
+        }
+
+        return $this->processBefore->isBefore(now());
     }
 
     protected function validateInput()

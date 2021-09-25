@@ -2,19 +2,24 @@
 
 namespace Heath\LaravelModelCopy\Action;
 
-use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
+use Heath\LaravelModelCopy\Exception\LaravelBatchCopyModelsValidationException;
 use Heath\LaravelModelCopy\Jobs\CopyModelJob;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class BatchCopyModels
 {
     protected string $toModel;
+    protected Builder $query;
     protected bool $deleteOriginal = false;
     protected int $chunkSize = 100;
-    protected Builder $query;
     protected int $count = 0;
     protected int $limit = 0;
     protected bool $copyModelsAsJobs = false;
+    protected string $queue;
+    protected Carbon $processBefore;
 
     static public function make(): BatchCopyModels
     {
@@ -56,9 +61,11 @@ class BatchCopyModels
         return $this;
     }
 
-    public function asJob(string $queue = null)
+    public function processBefore(Carbon $processBefore)
     {
+        $this->processBefore = $processBefore;
 
+        return $this;
     }
 
     public function copyModelsAsJobs()
@@ -68,12 +75,63 @@ class BatchCopyModels
         return $this;
     }
 
+    public function onQueue(string $queue)
+    {
+        $this->queue = $queue;
+
+        return $this;
+    }
+
     public function run()
     {
-//        $this->validate();
+        $this->validate();
 
-//        dd($this->query);
+        $this->performBatch();
+    }
 
+    protected function validate()
+    {
+        $this->validateInput();
+    }
+
+    protected function validateInput()
+    {
+        if(! isset($this->query)) {
+            throw new LaravelBatchCopyModelsValidationException(
+                'Unable to batch copy models as query hasn\'t been defined.'
+            );
+        }
+
+        if(! isset($this->toModel)) {
+            throw new LaravelBatchCopyModelsValidationException(
+                'Unable to batch copy models as new model class hasn\'t been defined.'
+            );
+        }
+
+        if(! class_exists($this->toModel)) {
+            throw new LaravelBatchCopyModelsValidationException(
+                'Unable to batch copy models as new model class doesn\'t exist. Class: '
+                . $this->toModel
+            );
+        }
+
+        if($this->chunkSize <= 1) {
+            throw new LaravelBatchCopyModelsValidationException(
+                'Unable to batch copy models as chunk size must be greater than 1. Size: '
+                . $this->chunkSize
+            );
+        }
+
+        if($this->limit < 0) {
+            throw new LaravelBatchCopyModelsValidationException(
+                'Unable to batch copy models as limit size must be greater than 0. Size: '
+                . $this->limit
+            );
+        }
+    }
+
+    protected function performBatch()
+    {
         $this
             ->query
             ->chunkById($this->chunkSize, function($items) {
@@ -81,41 +139,38 @@ class BatchCopyModels
                     return false;
                 }
 
-                $items->each(function($item) {
-                    $this->incrementCount();
-
-                    if($this->hasReachedLimit()) {
-                        return false;
-                    }
-
-                    $copyModel = CopyModel::make()
-                        ->copy($item)
-                        ->to($this->toModel)
-                        ->when($this->deleteOriginal, fn($self) => $self->deleteOriginal());
-
-                    $this->copyModelsAsJobs ? CopyModelJob::dispatch($copyModel) : $copyModel->run();
-                });
+                $this->copyModels($items);
             });
-
-//        $this->validate();
-//
-//        $this->performCopy();
-//
-//        $this->confirmModelCopied();
-//
-//        if($this->deleteOriginal) {
-//            $this->fromModel->forceDelete();
-//
-//            $this->confirmOriginalModelDeleted();
-//        }
     }
 
-    public function incrementCount()
+    protected function copyModels(Collection $models)
+    {
+        $models->each(fn($model) => $this->copyModel($model));
+    }
+
+    protected function copyModel(Model $model)
+    {
+        $this->incrementCount();
+
+        if($this->hasReachedLimit()) {
+            return false;
+        }
+
+        $copyModel = CopyModel::make()
+            ->copy($model)
+            ->to($this->toModel)
+            ->when($this->deleteOriginal, fn($self) => $self->deleteOriginal())
+            ->when(isset($this->processBefore), fn($self) => $self->processBefore($this->processBefore));
+
+        $this->copyModelsAsJobs ? $this->copyAsJobs($copyModel) : $this->copySync($copyModel);
+    }
+
+    protected function incrementCount()
     {
         $this->count++;
     }
 
-    public function hasReachedLimit()
+    protected function hasReachedLimit()
     {
         if(! $this->limit) {
             return false;
@@ -124,103 +179,17 @@ class BatchCopyModels
         return $this->count > $this->limit;
     }
 
-
-    protected function validate()
+    protected function copyAsJobs(CopyModel $copyModel)
     {
-        $this->validateInput();
-    }
-//
-    protected function validateInput()
-    {
-//        if(! isset($this->fromModel)) {
-//            throw new LaravelModelCopyValidationException(
-//                'Unable to copy model as original model class hasn\'t been defined.'
-//            );
-//        }
+        $job = CopyModelJob::dispatch($copyModel);
 
-        if(! isset($this->query)) {
-            throw new LaravelModelCopyValidationException(
-                'Unable to copy model as new model class hasn\'t been defined.'
-            );
-        }
-
-        if(! isset($this->toModel)) {
-            throw new LaravelModelCopyValidationException(
-                'Unable to copy model as new model class hasn\'t been defined.'
-            );
-        }
-
-        if(! class_exists($this->toModel)) {
-            throw new LaravelModelCopyValidationException(
-                sprintf(
-                    'Unable to copy model as new model class doesn\'t exist. Model: %s, ID: %s',
-                    get_class($this->fromModel),
-                    $this->fromModel->id
-                )
-            );
+        if(isset($this->queue)) {
+            $job->onQueue($this->queue);
         }
     }
-//
-//    protected function validateColumns()
-//    {
-//        $fromColumns = app(DescribeModel::class)->setModel($this->fromModel)->columns();
-//
-//        $toColumns = app(DescribeModel::class)->setModel($this->toModel)->columns();
-//
-//        $diff = collect($fromColumns)->diff($toColumns);
-//
-//        if($diff->isEmpty()) {
-//            return;
-//        }
-//
-//        throw new LaravelModelCopyValidationException(
-//            sprintf(
-//                'Unable to copy model as new table doesn\'t contain all columns of the original table. Model: %s, ID: %s, Columns: %s',
-//                get_class($this->fromModel),
-//                $this->fromModel->id,
-//                $diff->implode(', ')
-//            )
-//        );
-//    }
-//
-//    protected function performCopy()
-//    {
-//        DB::table(app(DescribeModel::class)->setModel($this->toModel)->table())
-//            ->updateOrInsert(
-//                ['id' => $this->fromModel->getAttribute('id')],
-//                $this->fromModel->getAttributes()
-//            );
-//    }
-//
-//    protected function confirmModelCopied()
-//    {
-//        $newRecord = DB::table(app(DescribeModel::class)->setModel($this->toModel)->table())
-//            ->find($this->fromModel->getAttribute('id'));
-//
-//        if(is_null($newRecord)) {
-//            throw new LaravelModelCopyValidationException(
-//                sprintf(
-//                    'Model copy failed. Original copy has not been removed. Model: %s, ID: %s',
-//                    get_class($this->fromModel),
-//                    $this->fromModel->id
-//                )
-//            );
-//        };
-//    }
-//
-//    protected function confirmOriginalModelDeleted()
-//    {
-//        $newRecord = DB::table(app(DescribeModel::class)->setModel($this->fromModel)->table())
-//            ->find($this->fromModel->getAttribute('id'));
-//
-//        if(! is_null($newRecord)) {
-//            throw new LaravelModelCopyValidationException(
-//                sprintf(
-//                    'Model deletion has failed. Original copy has not been removed. Model: %s, ID: %s',
-//                    get_class($this->fromModel),
-//                    $this->fromModel->id
-//                )
-//            );
-//        };
-//    }
+
+    protected function copySync(CopyModel $copyModel)
+    {
+        $copyModel->run();
+    }
 }
