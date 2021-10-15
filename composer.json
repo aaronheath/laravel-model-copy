@@ -18,7 +18,8 @@
     "require-dev": {
         "orchestra/testbench": "^6.21",
         "sempro/phpunit-pretty-print": "^1.0",
-        "spatie/laravel-ray": "^1.17"
+        "spatie/laravel-ray": "^1.17",
+        "phpunit/phpunit": "^9"
     },
     "autoload": {
         "psr-4": {
