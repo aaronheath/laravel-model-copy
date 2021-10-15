@@ -24,6 +24,6 @@
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_DATABASE" value="laravel_model_copy"/>
         <env name="DB_USERNAME" value="general"/>
-        <env name="DB_PASSWORD" value="pass"/>
+        <env name="DB_PASSWORD" value="password"/>
     </php>
 </phpunit>

@@ -3,17 +3,14 @@
 namespace Tests;
 
 use Heath\LaravelModelCopy\Action\BatchCopyModels;
-use Heath\LaravelModelCopy\Action\CopyModel;
 use Heath\LaravelModelCopy\Exception\LaravelBatchCopyModelsValidationException;
 use Heath\LaravelModelCopy\Jobs\CopyModelJob;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use ReflectionClass;
 use Tests\Models\ExampleA;
 use Tests\Models\ExampleB;
-use Tests\Models\ExampleC;
 
 class BatchCopyModelsTest extends TestCase
 {
@@ -194,6 +191,80 @@ class BatchCopyModelsTest extends TestCase
         Queue::assertPushed(function(CopyModelJob $job) use ($processBefore) {
             return $job->getCopyModel()->processBefore->equalTo($processBefore);
         });
+    }
+
+    /**
+     * @test
+     */
+    public function passes_through_delay_due_to_rpm()
+    {
+        Queue::fake();
+
+        Carbon::setTestNow(now()->startOfMinute());
+
+        ExampleA::factory()->count(20)->create();
+
+        BatchCopyModels::make()
+            ->to(ExampleB::class)
+            ->query(
+                ExampleA::whereB(true)
+            )
+            ->rpm(3)
+            ->copyModelsAsJobs()
+            ->run();
+
+        Queue::assertPushed(function(CopyModelJob $job) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute());
+        });
+
+        Queue::assertPushed(function(CopyModelJob $job) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute()->addSeconds(20));
+        });
+
+        Queue::assertPushed(function(CopyModelJob $job) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute()->addSeconds(40));
+        });
+    }
+
+    /**
+     * @test
+     */
+    public function passes_through_rpm_and_process_before()
+    {
+        Queue::fake();
+
+        Carbon::setTestNow(now()->startOfMinute());
+
+        $processBefore = now()->addMinutes(5);
+
+        ExampleA::factory()->count(100)->create();
+
+        BatchCopyModels::make()
+            ->to(ExampleB::class)
+            ->query(
+                ExampleA::whereB(true)
+            )
+            ->processBefore($processBefore)
+            ->rpm(3)
+            ->copyModelsAsJobs()
+            ->run();
+
+        Queue::assertPushed(function(CopyModelJob $job) use ($processBefore) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute())
+                && $job->getCopyModel()->processBefore->equalTo($processBefore);
+        });
+
+        Queue::assertPushed(function(CopyModelJob $job) use ($processBefore) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute()->addSeconds(20))
+                && $job->getCopyModel()->processBefore->equalTo($processBefore);
+        });
+
+        Queue::assertPushed(function(CopyModelJob $job) use ($processBefore) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute()->addSeconds(40))
+                && $job->getCopyModel()->processBefore->equalTo($processBefore);
+        });
+
+        Queue::assertPushed(CopyModelJob::class, 16);
     }
 
     /**

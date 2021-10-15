@@ -2,6 +2,7 @@
 
 namespace Heath\LaravelModelCopy\Action;
 
+use Carbon\CarbonImmutable;
 use Heath\LaravelModelCopy\Exception\LaravelBatchCopyModelsValidationException;
 use Heath\LaravelModelCopy\Jobs\CopyModelJob;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,6 +21,9 @@ class BatchCopyModels
     protected bool $copyModelsAsJobs = false;
     protected string $queue;
     protected Carbon $processBefore;
+    protected int $rpm;
+    protected CarbonImmutable $delayingUntil;
+    protected CarbonImmutable $startedAt;
 
     static public function make(): BatchCopyModels
     {
@@ -68,6 +72,13 @@ class BatchCopyModels
         return $this;
     }
 
+    public function rpm(int $rpm)
+    {
+        $this->rpm = $rpm;
+
+        return $this;
+    }
+
     public function copyModelsAsJobs()
     {
         $this->copyModelsAsJobs = true;
@@ -84,6 +95,8 @@ class BatchCopyModels
 
     public function run()
     {
+        $this->startedAt = now()->toImmutable();
+
         $this->validate();
 
         $this->performBatch();
@@ -128,6 +141,13 @@ class BatchCopyModels
                 . $this->limit
             );
         }
+
+        if(isset($this->rpm) && $this->rpm < 0) {
+            throw new LaravelBatchCopyModelsValidationException(
+                'Unable to batch copy models as rate per minute (rpm) must be greater than 0. Size: '
+                . $this->rpm
+            );
+        }
     }
 
     protected function performBatch()
@@ -136,6 +156,10 @@ class BatchCopyModels
             ->query
             ->chunkById($this->chunkSize, function($items) {
                 if($this->hasReachedLimit()) {
+                    return false;
+                }
+
+                if($this->delayHasExceededProcessBefore()) {
                     return false;
                 }
 
@@ -153,6 +177,10 @@ class BatchCopyModels
         $this->incrementCount();
 
         if($this->hasReachedLimit()) {
+            return false;
+        }
+
+        if($this->delayHasExceededProcessBefore()) {
             return false;
         }
 
@@ -179,9 +207,26 @@ class BatchCopyModels
         return $this->count > $this->limit;
     }
 
+    protected function delayHasExceededProcessBefore()
+    {
+        if(! isset($this->delayingUntil)) {
+            return false;
+        }
+
+        if(! isset($this->processBefore)) {
+            return false;
+        }
+
+        return $this->delayingUntil->gt($this->processBefore);
+    }
+
     protected function copyAsJobs(CopyModel $copyModel)
     {
         $job = CopyModelJob::dispatch($copyModel);
+
+        if(isset($this->rpm)) {
+            $job->delay($this->delayUntil());
+        }
 
         if(isset($this->queue)) {
             $job->onQueue($this->queue);
@@ -191,5 +236,12 @@ class BatchCopyModels
     protected function copySync(CopyModel $copyModel)
     {
         $copyModel->run();
+    }
+
+    protected function delayUntil()
+    {
+        $this->delayingUntil = $this->startedAt->addSeconds(floor(60 / $this->rpm) * $this->count);
+
+        return $this->delayingUntil;
     }
 }

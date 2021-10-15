@@ -5,7 +5,6 @@ namespace Tests;
 use Heath\LaravelModelCopy\Action\CopyModel;
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Models\ExampleA;
 use Tests\Models\ExampleB;

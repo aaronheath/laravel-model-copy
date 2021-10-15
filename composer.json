@@ -12,7 +12,8 @@
     ],
     "require": {
         "php": "^7.4|^8.0",
-        "illuminate/support": "^8.61"
+        "illuminate/support": "^8.61",
+        "aaronheath/class-logger": "^1.0"
     },
     "require-dev": {
         "orchestra/testbench": "^6.21",
