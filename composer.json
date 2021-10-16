@@ -3,6 +3,7 @@
     "description": "Copy one Laravel Eloquent model from one table to another.",
     "license": "MIT",
     "keywords": ["laravel", "eloquent", "model", "copy", "move", "backup"],
+    "homepage": "https://github.com/aaronheath/laravel-model-copy",
     "authors": [
         {
             "name": "Aaron Heath",
@@ -31,6 +32,9 @@
             "Tests\\": "tests/",
             "Database\\Factories\\Tests\\Models\\": "database/factories/"
         }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     },
     "minimum-stability": "stable"
 }

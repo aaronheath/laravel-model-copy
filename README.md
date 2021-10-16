@@ -1,8 +1,8 @@
 # Laravel Model Copy
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/aaronheath/laravel-model-query.svg?style=flat-square)](https://packagist.org/packages/aaronheath/laravel-model-query)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/aaronheath/laravel-model-query/testing?label=tests)](https://github.com/aaronheath/laravel-model-query/actions?query=workflow%3Arun-tests+branch%3Amaster)
-[![Total Downloads](https://img.shields.io/packagist/dt/daaronheath/laravel-model-query.svg?style=flat-square)](https://packagist.org/packages/daaronheath/laravel-model-query)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/aaronheath/laravel-model-copy.svg?style=flat-square)](https://packagist.org/packages/aaronheath/laravel-model-copy)
+[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/aaronheath/laravel-model-copy/run-tests?label=tests)](https://github.com/aaronheath/laravel-model-copy/actions?query=workflow%3Arun-tests+branch%3Amaster)
+[![Total Downloads](https://img.shields.io/packagist/dt/daronheath/laravel-model-copy.svg?style=flat-square)](https://packagist.org/packages/aaronheath/laravel-model-copy)
 
 Laravel model copy helps you copy or move records from one database table to another. This solution is designed for moving un-needed records to another table in a safe manner which can then be backedup and, if need, truncated.
 
