@@ -240,7 +240,7 @@ class BatchCopyModels
 
     protected function delayUntil()
     {
-        $this->delayingUntil = $this->startedAt->addSeconds(floor(60 / $this->rpm) * $this->count);
+        $this->delayingUntil = $this->startedAt->addSeconds(floor(60 / $this->rpm * $this->count));
 
         return $this->delayingUntil;
     }

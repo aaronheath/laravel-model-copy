@@ -229,6 +229,39 @@ class BatchCopyModelsTest extends TestCase
     /**
      * @test
      */
+    public function passes_through_delay_due_to_rpm_where_greater_than_60()
+    {
+        Queue::fake();
+
+        Carbon::setTestNow(now()->startOfMinute());
+
+        ExampleA::factory()->count(300)->create();
+
+        BatchCopyModels::make()
+            ->to(ExampleB::class)
+            ->query(
+                ExampleA::whereB(true)
+            )
+            ->rpm(100)
+            ->copyModelsAsJobs()
+            ->run();
+
+        Queue::assertPushed(function(CopyModelJob $job) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute());
+        });
+
+        Queue::assertPushed(function(CopyModelJob $job) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute()->addSeconds(2));
+        });
+
+        Queue::assertPushed(function(CopyModelJob $job) {
+            return $job->delay->equalTo(now()->addMinute()->startOfMinute()->addSeconds(5));
+        });
+    }
+
+    /**
+     * @test
+     */
     public function passes_through_rpm_and_process_before()
     {
         Queue::fake();
