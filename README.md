@@ -204,7 +204,7 @@ BatchCopyModels::make()
     ->run();
 ```
 
-We may also want to limit how many records are copied / moved in any given minute. To do this a rate per minute (rpm) can be defied. If we're wanting to ensure that we only copy 20 records per minute then we can use `->rpm(20)`. Using this feature requires `->copyModelsAsJobs()` to be used.
+We may also want to limit how many records are copied / moved in any given minute. To do this a rate per minute (rpm) can be defined. If we're wanting to ensure that we only copy 20 records per minute then we can use `->rpm(20)`. Using this feature requires `->copyModelsAsJobs()` to be used.
 
 ```php
 <?php
@@ -254,10 +254,9 @@ Deleting an individual model is as easy as...
 
 use Heath\LaravelModelCopy\Action\DeleteModel;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
 DeleteModel::make()
-    ->delete(Example::find(1))
+    ->delete(ExampleA::find(1))
     ->run();
 ```
 
@@ -272,7 +271,6 @@ Here's a simple batch delete which will delete all model ExampleA records where 
 
 use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
 BatchDeleteModels::make()
     ->query(
@@ -281,19 +279,15 @@ BatchDeleteModels::make()
     ->run();
 ```
 
-<<<<<<<<<<<<<<<<<<<<<< HERE >>>>>>>>>>>>>>>>>>>>>
-
-If we want limit on how many records we want to copy / move in one go, we can use `->limit(1000)`.
+If we want limit on how many records we want to delete in one go, we can use `->limit(1000)`.
 
 ```php
 <?php
 
-use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
-BatchCopyModels::make()
-    ->to(ExampleB::class)
+BatchDeleteModels::make()
     ->query(
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
@@ -306,12 +300,10 @@ By default queries will be chunked into 100 record batches. If you wish to use y
 ```php
 <?php
 
-use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
-BatchCopyModels::make()
-    ->to(ExampleB::class)
+BatchDeleteModels::make()
     ->query(
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
@@ -319,21 +311,19 @@ BatchCopyModels::make()
     ->run();
 ```
 
-Up until now, all actions happen in one syncronious stream. In real world situation it's better to process individual copy / move model actions by pushing them to the queue. This can be achieved by including `->copyModelsAsJobs()`.
+Up until now, all actions happen in one syncronious stream. In real world situation it's better to process individual model deletion actions by pushing them to the queue. This can be achieved by including `->copyModelsAsJobs()`.
 
 ```php
 <?php
 
-use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
-BatchCopyModels::make()
-    ->to(ExampleB::class)
+BatchDeleteModels::make()
     ->query(
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
-    ->copyModelsAsJobs()
+    ->deleteModelsAsJobs()
     ->run();
 ```
 
@@ -342,54 +332,48 @@ If a queue besides the default wants to be used, then include `->onQueue('queue-
 ```php
 <?php
 
-use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
-BatchCopyModels::make()
-    ->to(ExampleB::class)
+BatchDeleteModels::make()
     ->query(
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
-    ->copyModelsAsJobs()
+    ->deleteModelsAsJobs()
     ->onQueue('queue-name')
     ->run();
 ```
 
-When moving large sets of data it may take quite some time. In these cases you may want to group your moving batches into blocks of time. Let's say we want to run the script nightly at 23:00 and want to make sure we stop moving copying models at 05:00 the next day. This can be achieved by using `->processBefore(now()->addDay()->setTime(5, 0, 0)`.
+When deleting large sets of data it may take quite some time. In these cases you may want to group your deleting batches into blocks of time. Let's say we want to run the script nightly at 23:00 and want to make sure we stop moving deleting models at 05:00 the next day. This can be achieved by using `->processBefore(now()->addDay()->setTime(5, 0, 0)`.
 
 ```php
 <?php
 
-use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
 BatchCopyModels::make()
-    ->to(ExampleB::class)
     ->query(
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
-    ->copyModelsAsJobs()
+    ->deleteModelsAsJobs()
     ->processBefore(now()->addDay()->setTime(5, 0, 0)) // 05:00 tomorrow
     ->run();
 ```
 
-We may also want to limit how many records are copied / moved in any given minute. To do this a rate per minute (rpm) can be defied. If we're wanting to ensure that we only copy 20 records per minute then we can use `->rpm(20)`. Using this feature requires `->copyModelsAsJobs()` to be used.
+We may also want to limit how many records are deleted in any given minute. To do this a rate per minute (rpm) can be defined. If we're wanting to ensure that we only delete 20 records per minute then we can use `->rpm(20)`. Using this feature requires `->copyModelsAsJobs()` to be used.
 
 ```php
 <?php
 
-use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
 use App\Models\ExampleA;
-use App\Models\ExampleB;
 
-BatchCopyModels::make()
-    ->to(ExampleB::class)
+BatchDeleteModels::make()
     ->query(
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
-    ->copyModelsAsJobs()
+    ->deleteModelsAsJobs()
     ->rpm(20)
     ->run();
 ```
