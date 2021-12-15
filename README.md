@@ -148,6 +148,25 @@ BatchCopyModels::make()
     ->run();
 ```
 
+To use a custom (not 'id') column to chunk by use `->chunkColumn()`.
+
+```php
+<?php
+
+use Heath\LaravelModelCopy\Action\BatchCopyModels;
+use App\Models\ExampleA;
+use App\Models\ExampleB;
+
+BatchCopyModels::make()
+    ->to(ExampleB::class)
+    ->query(
+        ExampleA::where('handled_at', '<', now()->subYears(3))
+    )
+    ->chunk(500)
+    ->chunkColumn('created_at')
+    ->run();
+```
+
 Up until now, all actions happen in one syncronious stream. In real world situation it's better to process individual copy / move model actions by pushing them to the queue. This can be achieved by including `->copyModelsAsJobs()`.
 
 ```php
@@ -308,6 +327,23 @@ BatchDeleteModels::make()
         ExampleA::where('handled_at', '<', now()->subYears(3))
     )
     ->chunk(500)
+    ->run();
+```
+
+To use a custom (not 'id') column to chunk by use `->chunkColumn()`.
+
+```php
+<?php
+
+use Heath\LaravelModelCopy\Action\BatchDeleteModels;
+use App\Models\ExampleA;
+
+BatchDeleteModels::make()
+    ->query(
+        ExampleA::where('handled_at', '<', now()->subYears(3))
+    )
+    ->chunk(500)
+    ->chunkColumn('created_at')
     ->run();
 ```
 
