@@ -4,12 +4,15 @@ namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CopyModel
 {
     protected Model $fromModel;
+    protected string $fromModelClass;
+    protected $fromModelKey;
     protected string $toModel;
     protected bool $deleteOriginal = false;
     protected Carbon $processBefore;
@@ -26,7 +29,8 @@ class CopyModel
 
     public function copy(Model $fromModel)
     {
-        $this->fromModel = $fromModel;
+        $this->fromModelClass = get_class($fromModel);
+        $this->fromModelKey = $fromModel->getKey();
 
         return $this;
     }
@@ -67,6 +71,8 @@ class CopyModel
             return;
         }
 
+        $this->hydrateFromModel();
+
         $this->validate();
 
         $this->performCopy();
@@ -78,6 +84,25 @@ class CopyModel
 
             $this->confirmOriginalModelDeleted();
         }
+    }
+
+    public function hydrateFromModel()
+    {
+        if(! isset($this->fromModelClass) || ! isset($this->fromModelKey)) {
+            throw new LaravelModelCopyValidationException(
+                'Unable to copy model as original model class hasn\'t been defined.'
+            );
+        }
+
+        $query = $this->fromModelClass::whereKey($this->fromModelKey);
+
+        if(in_array(SoftDeletes::class, class_uses($this->fromModelClass))) {
+            $query->withTrashed();
+        }
+
+        $this->fromModel = $query->first();
+
+        return $this;
     }
 
     protected function validate()
@@ -98,12 +123,6 @@ class CopyModel
 
     protected function validateInput()
     {
-        if(! isset($this->fromModel)) {
-            throw new LaravelModelCopyValidationException(
-                'Unable to copy model as original model class hasn\'t been defined.'
-            );
-        }
-
         if(! isset($this->toModel)) {
             throw new LaravelModelCopyValidationException(
                 'Unable to copy model as new model class hasn\'t been defined.'

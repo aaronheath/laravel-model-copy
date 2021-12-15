@@ -14,6 +14,7 @@ class BatchDeleteModels
 {
     protected Builder $query;
     protected int $chunkSize = 100;
+    protected string $chunkColumn = 'id';
     protected int $count = 0;
     protected int $limit = 0;
     protected bool $deleteModelsAsJobs = false;
@@ -31,6 +32,13 @@ class BatchDeleteModels
     public function chunkSize(int $chunkSize)
     {
         $this->chunkSize = $chunkSize;
+
+        return $this;
+    }
+
+    public function chunkColumn(string $column)
+    {
+        $this->chunkColumn = $column;
 
         return $this;
     }
@@ -135,7 +143,7 @@ class BatchDeleteModels
                 }
 
                 $this->deleteModels($items);
-            });
+            }, $this->chunkColumn);
     }
 
     protected function deleteModels(Collection $models)

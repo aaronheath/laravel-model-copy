@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\Models\ExampleA;
 use Tests\Models\ExampleB;
+use Tests\Models\ExampleD;
+use Tests\Models\ExampleE;
 
 class BatchCopyModelsTest extends TestCase
 {
@@ -110,6 +112,29 @@ class BatchCopyModelsTest extends TestCase
     /**
      * @test
      */
+    public function copies_batch_of_models_to_observing_chunk_column()
+    {
+        ExampleD::factory()->count(350)->create();
+
+        BatchCopyModels::make()
+            ->to(ExampleE::class)
+            ->limit(20)
+            ->chunkSize(5)
+            ->chunkColumn('created_at')
+            ->query(
+                ExampleD::whereB(true)->orderBy('created_at')
+            )
+            ->run();
+
+        $this->assertEquals(
+            20,
+            DB::table('example_e')->whereB(true)->count()
+        );
+    }
+
+    /**
+     * @test
+     */
     public function pushes_individual_jobs_to_queue_for_copies()
     {
         Queue::fake();
@@ -129,7 +154,7 @@ class BatchCopyModelsTest extends TestCase
         Queue::assertPushed(CopyModelJob::class, DB::table('example_a')->whereB(true)->count());
 
         Queue::assertPushed(function(CopyModelJob $job) use ($modelToCopy) {
-            $copyModel = $job->getCopyModel();
+            $copyModel = $job->getCopyModel()->hydrateFromModel();
 
             if($copyModel->toModel !== ExampleB::class) {
                 return false;

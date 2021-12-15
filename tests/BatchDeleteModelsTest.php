@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\Models\ExampleA;
+use Tests\Models\ExampleD;
 
 class BatchDeleteModelsTest extends TestCase
 {
@@ -83,6 +84,30 @@ class BatchDeleteModelsTest extends TestCase
     /**
      * @test
      */
+    public function deletes_batch_of_models_observing_chunk_column()
+    {
+        ExampleD::factory()->count(350)->create();
+
+        $beforeCount = DB::table('example_d')->whereB(true)->count();
+
+        BatchDeleteModels::make()
+            ->limit(20)
+            ->chunkSize(5)
+            ->chunkColumn('created_at')
+            ->query(
+                ExampleD::whereB(true)->orderBy('created_at')
+            )
+            ->run();
+
+        $this->assertEquals(
+            $beforeCount - 20,
+            DB::table('example_d')->whereB(true)->count()
+        );
+    }
+
+    /**
+     * @test
+     */
     public function pushes_individual_jobs_to_queue_for_deletions()
     {
         Queue::fake();
@@ -101,7 +126,7 @@ class BatchDeleteModelsTest extends TestCase
         Queue::assertPushed(DeleteModelJob::class, DB::table('example_a')->whereB(true)->count());
 
         Queue::assertPushed(function(DeleteModelJob $job) use ($modelToDelete) {
-            $deleteModel = $job->getDeleteModel();
+            $deleteModel = $job->getDeleteModel()->hydrateModel();
 
             if(! $deleteModel->model instanceof ExampleA) {
                 return false;
