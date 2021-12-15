@@ -11,6 +11,8 @@ class DeleteModel
 {
     protected Model $model;
     protected Carbon $processBefore;
+    protected string $modelClass;
+    protected $modelKey;
 
     static public function make(): DeleteModel
     {
@@ -24,7 +26,8 @@ class DeleteModel
 
     public function delete(Model $model)
     {
-        $this->model = $model;
+        $this->modelClass = get_class($model);
+        $this->modelKey = $model->getKey();
 
         return $this;
     }
@@ -51,11 +54,20 @@ class DeleteModel
             return;
         }
 
+        $this->hydrateModel();
+
         $this->validate();
 
         $this->performDelete();
 
         $this->confirmModelDeleted();
+    }
+
+    public function hydrateModel()
+    {
+        $this->model = $this->modelClass::whereKey($this->modelKey)->first();
+
+        return $this;
     }
 
     protected function validate()

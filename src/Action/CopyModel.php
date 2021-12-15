@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 class CopyModel
 {
     protected Model $fromModel;
+    protected string $fromModelClass;
+    protected $fromModelKey;
     protected string $toModel;
     protected bool $deleteOriginal = false;
     protected Carbon $processBefore;
@@ -26,7 +28,11 @@ class CopyModel
 
     public function copy(Model $fromModel)
     {
-        $this->fromModel = $fromModel;
+//        $this->fromModel = $fromModel;
+
+        $this->fromModelClass = get_class($fromModel);
+        $this->fromModelKey = $fromModel->getKey();
+
 
         return $this;
     }
@@ -67,6 +73,8 @@ class CopyModel
             return;
         }
 
+        $this->hydrateFromModel();
+
         $this->validate();
 
         $this->performCopy();
@@ -78,6 +86,13 @@ class CopyModel
 
             $this->confirmOriginalModelDeleted();
         }
+    }
+
+    public function hydrateFromModel()
+    {
+        $this->fromModel = $this->fromModelClass::whereKey($this->fromModelKey)->first();
+
+        return $this;
     }
 
     protected function validate()

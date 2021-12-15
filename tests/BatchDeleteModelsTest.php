@@ -126,7 +126,7 @@ class BatchDeleteModelsTest extends TestCase
         Queue::assertPushed(DeleteModelJob::class, DB::table('example_a')->whereB(true)->count());
 
         Queue::assertPushed(function(DeleteModelJob $job) use ($modelToDelete) {
-            $deleteModel = $job->getDeleteModel();
+            $deleteModel = $job->getDeleteModel()->hydrateModel();
 
             if(! $deleteModel->model instanceof ExampleA) {
                 return false;

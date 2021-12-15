@@ -154,7 +154,7 @@ class BatchCopyModelsTest extends TestCase
         Queue::assertPushed(CopyModelJob::class, DB::table('example_a')->whereB(true)->count());
 
         Queue::assertPushed(function(CopyModelJob $job) use ($modelToCopy) {
-            $copyModel = $job->getCopyModel();
+            $copyModel = $job->getCopyModel()->hydrateFromModel();
 
             if($copyModel->toModel !== ExampleB::class) {
                 return false;
