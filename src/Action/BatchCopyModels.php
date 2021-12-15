@@ -16,6 +16,7 @@ class BatchCopyModels
     protected Builder $query;
     protected bool $deleteOriginal = false;
     protected int $chunkSize = 100;
+    protected string $chunkColumn = 'id';
     protected int $count = 0;
     protected int $limit = 0;
     protected bool $copyModelsAsJobs = false;
@@ -47,6 +48,13 @@ class BatchCopyModels
     public function chunkSize(int $chunkSize)
     {
         $this->chunkSize = $chunkSize;
+
+        return $this;
+    }
+
+    public function chunkColumn(string $column)
+    {
+        $this->chunkColumn = $column;
 
         return $this;
     }
@@ -164,7 +172,7 @@ class BatchCopyModels
                 }
 
                 $this->copyModels($items);
-            });
+            }, $this->chunkColumn);
     }
 
     protected function copyModels(Collection $models)

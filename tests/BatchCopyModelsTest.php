@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\Models\ExampleA;
 use Tests\Models\ExampleB;
+use Tests\Models\ExampleD;
+use Tests\Models\ExampleE;
 
 class BatchCopyModelsTest extends TestCase
 {
@@ -104,6 +106,29 @@ class BatchCopyModelsTest extends TestCase
         $this->assertEquals(
             50,
             DB::table('example_b')->whereB(true)->count()
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function copies_batch_of_models_to_observing_chunk_column()
+    {
+        ExampleD::factory()->count(350)->create();
+
+        BatchCopyModels::make()
+            ->to(ExampleE::class)
+            ->limit(20)
+            ->chunkSize(5)
+            ->chunkColumn('created_at')
+            ->query(
+                ExampleD::whereB(true)->orderBy('created_at')
+            )
+            ->run();
+
+        $this->assertEquals(
+            20,
+            DB::table('example_e')->whereB(true)->count()
         );
     }
 
