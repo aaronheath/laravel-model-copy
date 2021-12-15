@@ -28,11 +28,8 @@ class CopyModel
 
     public function copy(Model $fromModel)
     {
-//        $this->fromModel = $fromModel;
-
         $this->fromModelClass = get_class($fromModel);
         $this->fromModelKey = $fromModel->getKey();
-
 
         return $this;
     }
