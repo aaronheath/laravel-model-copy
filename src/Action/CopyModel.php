@@ -4,6 +4,7 @@ namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelCopyValidationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -87,7 +88,19 @@ class CopyModel
 
     public function hydrateFromModel()
     {
-        $this->fromModel = $this->fromModelClass::whereKey($this->fromModelKey)->first();
+        if(! isset($this->fromModelClass) || ! isset($this->fromModelKey)) {
+            throw new LaravelModelCopyValidationException(
+                'Unable to copy model as original model class hasn\'t been defined.'
+            );
+        }
+
+        $query = $this->fromModelClass::whereKey($this->fromModelKey);
+
+        if(in_array(SoftDeletes::class, class_uses($this->fromModelClass))) {
+            $query->withTrashed();
+        }
+
+        $this->fromModel = $query->first();
 
         return $this;
     }
@@ -110,12 +123,6 @@ class CopyModel
 
     protected function validateInput()
     {
-        if(! isset($this->fromModel)) {
-            throw new LaravelModelCopyValidationException(
-                'Unable to copy model as original model class hasn\'t been defined.'
-            );
-        }
-
         if(! isset($this->toModel)) {
             throw new LaravelModelCopyValidationException(
                 'Unable to copy model as new model class hasn\'t been defined.'

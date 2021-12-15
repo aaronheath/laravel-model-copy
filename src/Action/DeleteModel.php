@@ -4,6 +4,7 @@ namespace Heath\LaravelModelCopy\Action;
 
 use Heath\LaravelModelCopy\Exception\LaravelModelDeleteValidationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -65,7 +66,19 @@ class DeleteModel
 
     public function hydrateModel()
     {
-        $this->model = $this->modelClass::whereKey($this->modelKey)->first();
+        if(! isset($this->modelClass) || ! isset($this->modelKey)) {
+            throw new LaravelModelDeleteValidationException(
+                'Unable to delete model as model hasn\'t been defined.'
+            );
+        }
+
+        $query = $this->modelClass::whereKey($this->modelKey);
+
+        if(in_array(SoftDeletes::class, class_uses($this->modelClass))) {
+            $query->withTrashed();
+        }
+
+        $this->model = $query->first();
 
         return $this;
     }
@@ -86,11 +99,7 @@ class DeleteModel
 
     protected function validateInput()
     {
-        if(! isset($this->model)) {
-            throw new LaravelModelDeleteValidationException(
-                'Unable to delete model as model hasn\'t been defined.'
-            );
-        }
+        //
     }
 
     protected function performDelete()

@@ -122,7 +122,7 @@ class LaravelModelCopyTest extends TestCase
     public function fails_copy_when_from_model_not_defined()
     {
         $this->expectException(LaravelModelCopyValidationException::class);
-        $this->expectExceptionMessage('Unable to copy model as original model class hasn\'t been defined.');
+        $this->expectExceptionMessage('Unable to delete model as original model class hasn\'t been defined.');
 
         CopyModel::make()->to(ExampleB::class)->run();
     }
@@ -133,7 +133,7 @@ class LaravelModelCopyTest extends TestCase
     public function fails_copy_when_to_model_not_defined()
     {
         $this->expectException(LaravelModelCopyValidationException::class);
-        $this->expectExceptionMessage('Unable to copy model as new model class hasn\'t been defined.');
+        $this->expectExceptionMessage('Unable to delete model as new model class hasn\'t been defined.');
 
         $fromModel = ExampleA::create([
             'a' => 'Hello',
