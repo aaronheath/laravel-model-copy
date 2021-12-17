@@ -50,6 +50,25 @@ class LaravelModelDeleteTest extends TestCase
     /**
      * @test
      */
+    public function swallows_delete_model_when_model_doesnt_exist()
+    {
+        $model = ExampleA::factory()->create();
+
+        $record = DB::table('example_a')->find($model->id);
+        $this->assertNotNull($record);
+
+        $model->forceDelete();
+
+        DeleteModel::make()->delete($model)->run();
+
+        $nullModel = DB::table('example_a')->find($model->id);
+
+        $this->assertNull($nullModel);
+    }
+
+    /**
+     * @test
+     */
     public function fails_delete_when_model_not_defined()
     {
         $this->expectException(LaravelModelDeleteValidationException::class);

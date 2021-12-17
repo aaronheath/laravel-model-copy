@@ -78,7 +78,9 @@ class DeleteModel
             $query->withTrashed();
         }
 
-        $this->model = $query->first();
+        if($model = $query->first()) {
+            $this->model = $model;
+        }
 
         return $this;
     }
@@ -104,11 +106,19 @@ class DeleteModel
 
     protected function performDelete()
     {
+        if(! isset($this->model)) {
+            return;
+        }
+
         $this->model->forceDelete();
     }
 
     protected function confirmModelDeleted()
     {
+        if(!isset($this->model)) {
+            return;
+        }
+
         $record = DB::table(app(DescribeModel::class)->setModel($this->model)->table())
             ->find($this->model->getAttribute('id'));
 
