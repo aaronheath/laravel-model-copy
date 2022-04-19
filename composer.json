@@ -14,7 +14,7 @@
     "require": {
         "php": "^7.4|^8.0",
         "illuminate/support": "^8.61|^9.0",
-        "aaronheath/class-logger": "dev-laravel-9-support"
+        "aaronheath/class-logger": "^1.0"
     },
     "require-dev": {
         "orchestra/testbench": "^6.21",
@@ -36,11 +36,5 @@
     "scripts": {
         "test": "vendor/bin/phpunit"
     },
-    "minimum-stability": "dev",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../class-logger"
-        }
-    ]
+    "minimum-stability": "dev"
 }
