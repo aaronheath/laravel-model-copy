@@ -174,6 +174,7 @@ class CopyModel
     protected function confirmModelCopied()
     {
         $newRecord = DB::table(app(DescribeModel::class)->setModel($this->toModel)->table())
+            ->useWritePdo()
             ->find($this->fromModel->getAttribute('id'));
 
         if(is_null($newRecord)) {
@@ -190,6 +191,7 @@ class CopyModel
     protected function confirmOriginalModelDeleted()
     {
         $newRecord = DB::table(app(DescribeModel::class)->setModel($this->fromModel)->table())
+            ->useWritePdo()
             ->find($this->fromModel->getAttribute('id'));
 
         if(! is_null($newRecord)) {
