@@ -120,6 +120,7 @@ class DeleteModel
         }
 
         $record = DB::table(app(DescribeModel::class)->setModel($this->model)->table())
+            ->useWritePdo()
             ->find($this->model->getAttribute('id'));
 
         if(! is_null($record)) {
